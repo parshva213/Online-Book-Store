@@ -1,5 +1,6 @@
 package com.example.onlinebookstore
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
@@ -31,9 +32,8 @@ class CartActivity : AppCompatActivity() {
 
         findViewById<Button>(R.id.checkoutButton).setOnClickListener {
             if (CartManager.getCartItems().isNotEmpty()) {
-                Toast.makeText(this, "Order placed successfully!", Toast.LENGTH_LONG).show()
-                CartManager.clearCart()
-                finish()
+                val intent = Intent(this, CheckoutActivity::class.java)
+                startActivity(intent)
             } else {
                 Toast.makeText(this, "Your cart is empty", Toast.LENGTH_SHORT).show()
             }

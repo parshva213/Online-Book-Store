@@ -1,19 +1,25 @@
 package com.example.onlinebookstore
 
 import android.content.Intent
+import android.os.Build.VERSION.SDK_INT
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SearchView
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import coil.Coil
+import coil.ImageLoader
+import coil.decode.GifDecoder
+import coil.decode.ImageDecoderDecoder
+import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.BufferedReader
 import java.io.InputStreamReader
-import java.util.Locale
 import kotlin.random.Random
 
 class MainActivity : AppCompatActivity() {
@@ -21,30 +27,81 @@ class MainActivity : AppCompatActivity() {
     private lateinit var recyclerView: RecyclerView
     private lateinit var bookAdapter: BookAdapter
     private var allBooks = mutableListOf<Book>()
+    private lateinit var toolbar: MaterialToolbar
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Initialize Coil with GIF support
+        val imageLoader = ImageLoader.Builder(this)
+            .components {
+                if (SDK_INT >= 28) {
+                    add(ImageDecoderDecoder.Factory())
+                } else {
+                    add(GifDecoder.Factory())
+                }
+            }
+            .build()
+        Coil.setImageLoader(imageLoader)
+
         setContentView(R.layout.activity_main)
+
+        toolbar = findViewById(R.id.mainToolbar)
+        setupToolbar()
 
         recyclerView = findViewById(R.id.recyclerView)
         recyclerView.layoutManager = LinearLayoutManager(this)
         
+        // Pre-initialize adapter with empty list to prevent crash
+        bookAdapter = BookAdapter(allBooks) { book ->
+            val intent = Intent(this@MainActivity, BookDetailActivity::class.java)
+            intent.putExtra("BOOK", book)
+            startActivity(intent)
+        }
+        recyclerView.adapter = bookAdapter
+
         lifecycleScope.launch {
             val books = loadBooksFromCSV()
             allBooks.clear()
             allBooks.addAll(books)
-            
-            bookAdapter = BookAdapter(allBooks) { book ->
-                val intent = Intent(this@MainActivity, BookDetailActivity::class.java)
-                intent.putExtra("BOOK", book)
-                startActivity(intent)
-            }
-            recyclerView.adapter = bookAdapter
+            bookAdapter.updateData(allBooks)
         }
 
         findViewById<FloatingActionButton>(R.id.btnViewCart).setOnClickListener {
             startActivity(Intent(this, CartActivity::class.java))
         }
+    }
+
+    private fun setupToolbar() {
+        toolbar.inflateMenu(R.menu.main_menu)
+        val searchItem = toolbar.menu.findItem(R.id.action_search)
+        val searchView = searchItem.actionView as SearchView
+
+        searchView.queryHint = getString(R.string.search_hint)
+        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                return false
+            }
+
+            override fun onQueryTextChange(newText: String?): Boolean {
+                filterBooks(newText)
+                return true
+            }
+        })
+    }
+
+    private fun filterBooks(query: String?) {
+        if (!::bookAdapter.isInitialized) return
+
+        val filteredList = if (query.isNullOrBlank()) {
+            allBooks
+        } else {
+            allBooks.filter { 
+                it.title.contains(query, ignoreCase = true) || 
+                it.author.contains(query, ignoreCase = true)
+            }
+        }
+        bookAdapter.updateData(filteredList)
     }
 
     private suspend fun loadBooksFromCSV(): List<Book> = withContext(Dispatchers.IO) {
@@ -62,9 +119,8 @@ class MainActivity : AppCompatActivity() {
                 if (tokens.size >= 8) {
                     val isbn = tokens[0]
                     
-                    // Generate realistic prices and discounts
                     val price = Random.nextDouble(299.0, 1499.0)
-                    val oldPrice = price * Random.nextDouble(1.1, 1.5) // 10% to 50% higher
+                    val oldPrice = price * Random.nextDouble(1.1, 1.5)
                     
                     booksMap[isbn] = Book(
                         isbn = isbn,

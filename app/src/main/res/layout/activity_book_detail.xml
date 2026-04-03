@@ -3,8 +3,22 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:layout_marginTop="30dp">
+    android:layout_height="match_parent">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fitsSystemWindows="true"
+        android:theme="@style/Theme.OnlineBookStore">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            app:navigationIcon="?attr/homeAsUpIndicator"
+            app:title="Book Details" />
+
+    </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
@@ -143,18 +157,6 @@
                 android:textColor="#007600"
                 android:textSize="18sp" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="FREE delivery by Tomorrow"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Ships from and sold by BookStore." />
-
             <!-- SIDE BY SIDE BUTTONS -->
             <LinearLayout
                 android:layout_width="match_parent"
@@ -168,9 +170,9 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:layout_marginEnd="8dp"
-                    android:backgroundTint="#FFD814"
+                    android:backgroundTint="#2196F3"
                     android:text="Add to Cart"
-                    android:textColor="@android:color/black"
+                    android:textColor="@android:color/white"
                     app:cornerRadius="8dp" />
 
                 <Button
@@ -179,9 +181,9 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:layout_marginStart="8dp"
-                    android:backgroundTint="#FFA41C"
-                    android:text="Buy Now"
-                    android:textColor="@android:color/black"
+                    android:backgroundTint="#4CAF50"
+                    android:text="Order Now"
+                    android:textColor="@android:color/white"
                     app:cornerRadius="8dp" />
 
             </LinearLayout>

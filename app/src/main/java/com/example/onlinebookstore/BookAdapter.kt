@@ -1,18 +1,19 @@
 package com.example.onlinebookstore
 
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import coil.ImageLoader
 import coil.load
 import coil.request.CachePolicy
+import coil.request.ImageRequest
 import java.util.Locale
 
 class BookAdapter(
-    private val books: List<Book>,
+    private var books: List<Book>,
     private val onItemClick: (Book) -> Unit
 ) : RecyclerView.Adapter<BookAdapter.BookViewHolder>() {
 
@@ -32,8 +33,6 @@ class BookAdapter(
         val book = books[position]
         holder.title.text = book.title
         holder.author.text = book.author
-        
-        // Display price in Rupees
         holder.price.text = String.format(Locale.getDefault(), "₹%.2f", book.price)
 
         val cleanUrl = book.imageUrlL
@@ -41,13 +40,21 @@ class BookAdapter(
             .replace("\"", "")
             .trim()
 
-        holder.image.load(cleanUrl) {
-            crossfade(true)
-            placeholder(android.R.drawable.ic_menu_gallery)
-            error(android.R.drawable.ic_menu_report_image)
-            diskCachePolicy(CachePolicy.ENABLED)
-            memoryCachePolicy(CachePolicy.ENABLED)
-        }
+        val context = holder.itemView.context
+        val placeholderRequest = ImageRequest.Builder(context)
+            .data("file:///android_asset/loding.gif")
+            .target { drawable ->
+                holder.image.load(cleanUrl) {
+                    crossfade(true)
+                    placeholder(drawable)
+                    error(android.R.drawable.ic_menu_report_image)
+                    diskCachePolicy(CachePolicy.ENABLED)
+                    memoryCachePolicy(CachePolicy.ENABLED)
+                }
+            }
+            .build()
+        
+        context.imageLoader.enqueue(placeholderRequest)
 
         holder.itemView.setOnClickListener {
             onItemClick(book)
@@ -55,4 +62,12 @@ class BookAdapter(
     }
 
     override fun getItemCount() = books.size
+
+    fun updateData(newBooks: List<Book>) {
+        books = newBooks
+        notifyDataSetChanged()
+    }
+    
+    private val android.content.Context.imageLoader: ImageLoader
+        get() = (applicationContext as? android.app.Application)?.let { coil.Coil.imageLoader(it) } ?: coil.Coil.imageLoader(this)
 }

@@ -1,5 +1,6 @@
 package com.example.onlinebookstore
 
+import android.graphics.drawable.Drawable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -8,7 +9,9 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import coil.ImageLoader
 import coil.load
+import coil.request.ImageRequest
 import java.util.Locale
 
 class CartAdapter(
@@ -34,8 +37,6 @@ class CartAdapter(
     override fun onBindViewHolder(holder: CartViewHolder, position: Int) {
         val item = items[position]
         holder.title.text = item.book.title
-        
-        // Display price in Rupees
         holder.price.text = String.format(Locale.getDefault(), "₹%.2f", item.book.price)
         holder.quantity.text = item.quantity.toString()
         
@@ -44,11 +45,19 @@ class CartAdapter(
             .replace("\"", "")
             .trim()
         
-        holder.image.load(cleanUrl) {
-            crossfade(true)
-            placeholder(android.R.drawable.ic_menu_gallery)
-            error(android.R.drawable.ic_menu_report_image)
-        }
+        val context = holder.itemView.context
+        val placeholderRequest = ImageRequest.Builder(context)
+            .data("file:///android_asset/loding.gif")
+            .target { drawable ->
+                holder.image.load(cleanUrl) {
+                    crossfade(true)
+                    placeholder(drawable)
+                    error(android.R.drawable.ic_menu_report_image)
+                }
+            }
+            .build()
+        
+        context.imageLoader.enqueue(placeholderRequest)
 
         holder.btnPlus.setOnClickListener {
             CartManager.addToCart(item.book)
@@ -72,4 +81,7 @@ class CartAdapter(
         items = newItems
         notifyDataSetChanged()
     }
+
+    private val android.content.Context.imageLoader: ImageLoader
+        get() = (applicationContext as? android.app.Application)?.let { coil.Coil.imageLoader(it) } ?: coil.Coil.imageLoader(this)
 }

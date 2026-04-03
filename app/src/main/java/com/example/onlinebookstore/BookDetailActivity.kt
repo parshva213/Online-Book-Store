@@ -1,6 +1,8 @@
 package com.example.onlinebookstore
 
+import android.content.Intent
 import android.graphics.Paint
+import android.os.Build
 import android.os.Bundle
 import android.widget.Button
 import android.widget.ImageView
@@ -9,7 +11,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import coil.load
-import coil.transform.RoundedCornersTransformation
+import com.google.android.material.appbar.MaterialToolbar
 import java.util.Locale
 
 class BookDetailActivity : AppCompatActivity() {
@@ -18,7 +20,18 @@ class BookDetailActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_book_detail)
 
-        val book = intent.getSerializableExtra("BOOK") as? Book
+        // Setup Toolbar and Back Button
+        val toolbar = findViewById<MaterialToolbar>(R.id.toolbar)
+        toolbar.setNavigationOnClickListener {
+            onBackPressedDispatcher.onBackPressed()
+        }
+
+        val book = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            intent.getSerializableExtra("BOOK", Book::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            intent.getSerializableExtra("BOOK") as? Book
+        }
 
         book?.let {
             findViewById<TextView>(R.id.detailBookTitle).text = it.title
@@ -56,6 +69,16 @@ class BookDetailActivity : AppCompatActivity() {
             book?.let {
                 CartManager.addToCart(it)
                 Toast.makeText(this, "Added to cart", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        findViewById<Button>(R.id.buyNowButton).setOnClickListener {
+            book?.let {
+                // Clear current cart and add only this book for a single-item "Order Now" flow
+                CartManager.clearCart()
+                CartManager.addToCart(it)
+                val intent = Intent(this, CheckoutActivity::class.java)
+                startActivity(intent)
             }
         }
     }
